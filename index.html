@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng Tính Lương & Chấm Công Tuyệt Vời</title>
+    <!-- Use Inter font family -->
+    <style>
+        /* --- CUSTOM CSS TO ENSURE RESPONSIVENESS --- */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f9fafb; min-height: 10vh; padding: 1.5rem; }
+        
+        .main-container { max-width: 1280px; margin: 0 auto; background-color: #ffffff; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .header-title { font-size: 1.875rem; font-weight: 800; color: #4338ca; margin-bottom: 1.5rem; display: flex; align-items: center; }
+        .input-group { display: flex; flex-direction: column; gap: 0.75rem; align-items: flex-end; margin-bottom: 2rem; padding: 1rem; background-color: #eef2ff; border-radius: 0.75rem; box-shadow: inset 0 1px 3px 0 rgba(0, 0, 0, 0.07); }
+        .input-field { display: block; width: 100%; border-radius: 0.375rem; border: 1px solid #d1d5db; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); padding: 0.625rem; font-size: 0.875rem; }
+        .btn-primary { padding: 0.625rem 1.5rem; background-color: #4f46e5; color: white; font-weight: 600; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); transition: all 150ms ease-in-out; }
+        .btn-primary:hover { background-color: #4338ca; }
+        .btn-success { background-color: #10b981; }
+        .btn-success:hover { background-color: #059669; }
+        .btn-action { padding: 0.5rem 1rem; background-color: #4f46e5; color: white; font-weight: 600; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); transition: all 150ms ease-in-out; }
+        .btn-action:hover { background-color: #4338ca; transform: scale(1.05); }
+        
+        .sticky-header { position: sticky; top: 0; z-index: 10; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .scroll-x-container { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); border: 1px solid #f3f4f6; }
+
+        input[type="number"] { -moz-appearance: textfield; }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        /* Responsive adjustments */
+        @media (min-width: 640px) {
+            .input-group { flex-direction: row; align-items: flex-end; }
+            .input-group > div { flex-grow: 1; }
+        }
+        @media (max-width: 639px) {
+            .input-group > button { margin-top: 0.5rem; width: 100%; }
+        }
+        
+        /* Grid for adding employee */
+        .grid-5-col { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 1rem; }
+        @media (min-width: 640px) {
+            .grid-5-col { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+            .grid-5-col .col-span-2 { grid-column: span 2 / span 2; }
+        }
+        
+        /* CSS fỏ Tiêu đề bảng kết quả */
+        .results-table th { 
+            padding: 0.75rem 0.75rem; 
+            font-size: 0.75rem; 
+            font-weight: 500; 
+            color: #0d9488; 
+            text-transform: uppercase;
+            text-align: center; /* Tiêu đề luôn căn giữa */
+        }
+        
+        /* Căn chỉnh lại cho phần nội dung bảng kết quả (tbody > td) */
+        .results-table td {
+            padding: 0.75rem 0.75rem; 
+            white-space: nowrap; 
+            font-size: 0.875rem;
+            text-align: center; /* Căn giữa mặc định cho các cột không có class riêng */
+        }
+        
+        /* Cột số thứ tự (#) - Căn giữa */
+        .results-table td:nth-child(1) {
+            text-align: center;
+            color: #6b7280; /* Màu xám */
+        }
+
+        /* Cột Tên - Căn trái (cho dễ đọc) */
+        .results-table td:nth-child(2) {
+            text-align: left; 
+            font-weight: 500; 
+            color: #111827;
+        }
+
+        /* --- CĂN CHỈNH MỚI: Căn giữa cho các cột kết quả là số ngày công/giờ OT --- */
+        /* Cột Ngày Công Thực (3) */
+        .results-table td:nth-child(3) { text-align: center; color: #4f46e5; }
+        /* Cột Tổng Giờ OT (4) */
+        .results-table td:nth-child(4) { text-align: center; color: #6b7280; }
+        /* Cột Công QĐ từ OT (1.5x) (5) */
+        .results-table td:nth-child(5) { text-align: center; font-weight: 600; color: #059669; }
+        /* Cột TỔNG Ngày Công QĐ (6) */
+        .results-table td:nth-child(6) { text-align: center; font-weight: 800; color: #4338ca; }
+
+        /* Các cột Tiền tệ (Lương) vẫn dùng Căn phải để căn thẳng hàng theo đơn vị tiền */
+        /* Cột Tổng Lương (7) */
+        .results-table td:nth-child(7) { text-align: right; color: #374151; }
+        /* Cột Phí Admin (8) */
+        .results-table td:nth-child(8) { text-align: right; color: #dc2626; }
+        /* Cột LƯƠNG THỰC NHẬN (9) */
+        .results-table td:nth-child(9) { text-align: right; font-weight: 800; color: #0d9488; }
+
+
+    </style>
+</head>
+<body onload="initApp()">
+    <div class="main-container">
+        <h2 class="header-title">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><line x1="2" y1="22" x2="22" y2="22" stroke-width="3" /></svg>
+            Web Tính Lương Nhanh & Lâu Dài (Sử dụng LocalStorage) 💼
+        </h2>
+        
+        <!-- Cấu hình Năm/Tháng -->
+        <div id="appContainer">
+            <div class="input-group">
+                <div style="flex-grow: 1;">
+                    <label for="year" class="block text-sm font-medium text-gray-700">Năm</label>
+                    <input type="number" id="year" value="2025" min="1900" class="input-field">
+                </div>
+                <div style="flex-grow: 1;">
+                    <label for="month" class="block text-sm font-medium text-gray-700">Tháng</label>
+                    <select id="month" class="input-field">
+                        <!-- Options generated by JS -->
+                    </select>
+                </div>
+                <button onclick="loadDataByDate()" class="btn-primary" style="min-width: 150px;">
+                    Chọn Tháng & Tải Dữ Liệu
+                </button>
+            </div>
+
+            <!-- Thêm nhân viên -->
+            <div class="p-4 bg-white border-b border-gray-200 mb-6 rounded-lg shadow-sm">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Thêm Nhân Viên Mới</h3>
+                <div class="grid-5-col">
+                    <div class="col-span-2">
+                        <label for="empName" class="block text-sm font-medium text-gray-700">Tên nhân viên</label>
+                        <input id="empName" class="input-field" placeholder="Ví dụ: Nguyễn Văn A">
+                    </div>
+                    <div>
+                        <label for="empRole" class="block text-sm font-medium text-gray-700">Loại thợ</label>
+                        <select id="empRole" class="input-field">
+                            <option value="tho">Thợ chính</option>
+                            <option value="phu">Thợ phụ</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="empRate" class="block text-sm font-medium text-gray-700">Mức lương/ngày</label>
+                        <input id="empRate" class="input-field" type="number" placeholder="Tiền (VNĐ)" step="1000" min="0">
+                    </div>
+                    <div>
+                        <button type="button" class="w-full btn-success" style="padding: 0.625rem 1rem;" onclick="addEmployee()">
+                            ➕ Thêm
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bảng Chấm Công -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h3 style="font-size: 1.25rem; font-weight: 700; color: #1f2937;">Bảng Chấm Công Tháng <span id="currentMonthYear"></span></h3>
+                <!-- Trạng thái lưu trữ dùng LocalStorage -->
+                <span id="saveStatus" class="hidden" style="font-size: 0.875rem; font-weight: 600; transition: all 500ms;"></span>
+            </div>
+            
+            <div class="scroll-x-container mb-8">
+                <table style="min-width: 100%; border-collapse: collapse; background-color: #fff; font-size: 0.875rem;">
+                    <thead class="sticky-header">
+                        <tr style="background-color: #f9fafb;">
+                            <th style="padding: 0.75rem 0.5rem; font-size: 0.75rem; font-weight: 500; color: #6b7280; text-transform: uppercase; min-width: 50px;">Stt</th>
+                            <th style="padding: 0.75rem 1rem; text-align: left; font-size: 0.75rem; font-weight: 500; color: #6b7280; text-transform: uppercase; min-width: 180px;">Tên Nhân Viên</th>
+                            <th style="padding: 0.75rem 0.5rem; font-size: 0.75rem; font-weight: 500; color: #6b7280; text-transform: uppercase; min-width: 80px;">Loại</th>
+                            <th style="padding: 0.75rem 0.5rem; font-size: 0.75rem; font-weight: 500; color: #6b7280; text-transform: uppercase; text-align: right; min-width: 120px;">Lương/Ngày</th>
+                            <!-- Days generated by JS -->
+                        </tr>
+                        <tr id="dayNumberRow" style="background-color: #f3f4f6;">
+                            <th colspan="4"></th>
+                            <!-- Day numbers and OT/Worked headers generated by JS -->
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceBody" style="background-color: white; border-top: 1px solid #e5e7eb;">
+                        <!-- Employee rows generated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Kết quả tính lương -->
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 2rem;">
+                <!-- Đã đổi tên hàm thành calculateAndSave() -->
+                <button type="button" class="btn-action" onclick="calculateAndSave()" style="padding: 0.75rem 2rem; font-size: 1.125rem; font-weight: 700;">
+                    💰 Tính Lương Ngay
+                </button>
+            </div>
+            
+            <div id="resultsArea" class="hidden" style="margin-top: 2rem;">
+                <h3 style="font-size: 1.25rem; font-weight: 700; color: #1f2937; margin-bottom: 1rem;">Bảng Kết Quả Tính Lương</h3>
+                <div class="scroll-x-container">
+                    <table class="results-table" style="min-width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+                        <thead style="background-color: #f0fdfa;">
+                            <tr>
+                                <th style="min-width: 50px;">#</th>
+                                <th style="min-width: 180px;">Tên</th>
+                                <th style="min-width: 100px;">Ngày Công Thực</th>
+                                <th style="min-width: 80px;">Tổng Giờ OT</th>
+                                <th style="min-width: 100px;">Công QĐ từ OT (1.5x)</th>
+                                <th style="min-width: 120px; font-size: 0.875rem; font-weight: 700;">TỔNG Ngày Công QĐ</th>
+                                <th style="min-width: 120px;">Tổng Lương</th>
+                                <th style="min-width: 100px;">Phí Admin</th>
+                                <th style="min-width: 140px; font-size: 0.875rem; font-weight: 700;">LƯƠNG THỰC NHẬN</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody" style="background-color: white; border-top: 1px solid #e5e7eb;">
+                            <!-- Results generated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript & LocalStorage Logic -->
+    <script>
+        let employees = [];
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth() + 1;
+        let daysInMonth = 0;
+        
+        window.saveTimer = null; // Debounce timer cho việc lưu
+
+        function initMonthSelector() {
+            const select = document.getElementById('month');
+            select.innerHTML = '';
+            for (let m = 1; m <= 12; m++) {
+                const option = document.createElement('option');
+                option.value = m;
+                option.textContent = `Tháng ${m}`;
+                if (m === currentMonth) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            }
+        }
+
+        async function initApp() {
+            // 1. Cài đặt Năm/Tháng hiện tại và tính số ngày
+            initMonthSelector();
+            document.getElementById('year').value = currentYear;
+            document.getElementById('month').value = currentMonth;
+            
+            // 2. Cập nhật số ngày và render header ngày ngay lập tức
+            daysInMonth = calculateDaysInMonth(currentYear, currentMonth);
+            document.getElementById('currentMonthYear').textContent = `${currentMonth}/${currentYear}`;
+            renderDayHeaders(); 
+            
+            loadDataByDate(); // Tải dữ liệu lần đầu bằng LocalStorage
+        }
+        
+        function getLocalStorageKey() {
+            const year = document.getElementById('year').value;
+            const month = document.getElementById('month').value;
+            return `salary_data_${month}-${year}`; 
+        }
+
+        function calculateDaysInMonth(year, month) {
+            return new Date(year, month, 0).getDate();
+        }
+
+        /**
+         * Tải dữ liệu từ LocalStorage khi chuyển đổi Tháng/Năm
+         */
+        function loadDataByDate() {
+            currentYear = parseInt(document.getElementById('year').value);
+            currentMonth = parseInt(document.getElementById('month').value);
+            
+            // 1. Cập nhật giao diện
+            daysInMonth = calculateDaysInMonth(currentYear, currentMonth);
+            document.getElementById('currentMonthYear').textContent = `${currentMonth}/${currentYear}`;
+            renderDayHeaders();
+            
+            // 2. Tải dữ liệu từ LocalStorage
+            const key = getLocalStorageKey();
+            const storedData = localStorage.getItem(key);
+
+            let loadedEmployees = [];
+            let loadedResults = [];
+
+            if (storedData) {
+                try {
+                    const data = JSON.parse(storedData);
+                    loadedEmployees = Array.isArray(data.employees) ? data.employees : [];
+                    loadedResults = Array.isArray(data.results) ? data.results : [];
+                    console.log(`Data loaded for ${key} from localStorage. Employees: ${loadedEmployees.length}, Results: ${loadedResults.length}`);
+                } catch (e) {
+                    console.error("Error parsing data from localStorage:", e);
+                }
+            } else {
+                console.log(`No data found for ${key} in localStorage, starting fresh.`);
+            }
+            
+            // 3. Cập nhật state và render
+            employees = loadedEmployees;
+            renderAttendanceTable();
+
+            // 4. Render kết quả nếu có
+            if (loadedResults.length > 0) {
+                renderResults(loadedResults);
+            } else {
+                document.getElementById('resultsArea').classList.add('hidden');
+                document.getElementById('resultsBody').innerHTML = '';
+            }
+
+            // Ẩn trạng thái lưu
+            document.getElementById('saveStatus').classList.add('hidden');
+        }
+        
+        function renderDayHeaders() {
+            const dayRow = document.getElementById('dayNumberRow');
+            // Cài đặt lại header
+            dayRow.innerHTML = '<th colspan="4" style="padding: 0.75rem 0.5rem; font-size: 0.75rem; font-weight: 500; color: #6b7280; text-transform: uppercase;"></th>';
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                dayRow.innerHTML += `
+                    <th style="padding: 0.5rem 0.25rem; text-align: center; font-size: 10px; font-weight: 500; color: #4b5563; min-width: 50px; border-left: 1px solid #e5e7eb;">
+                        <div style="font-weight: 700; font-size: 1rem;">${d}</div>
+                        <div style="font-size: 9px; color: #6366f1;">Làm/OT</div>
+                    </th>`;
+            }
+            dayRow.innerHTML += `<th style="padding: 0.5rem 0.25rem; font-size: 0.75rem; font-weight: 500; color: #6b7280; text-transform: uppercase; min-width: 50px;">Xóa</th>`;
+        }
+
+        /**
+         * Hàm chỉ tính toán kết quả mà KHÔNG render
+         */
+        function calculateResults() {
+            // Định nghĩa giờ làm việc chuẩn (8 giờ/ngày)
+            const HOURS_PER_DAY = 8.0; 
+            const OT_MULTIPLIER = 1.5;
+
+            const results = employees.map((emp, index) => {
+                let days_actual = 0; // Ngày công thực tế (worked = true)
+                let total_ot_hours = 0.0; // Tổng giờ OT
+                
+                // 1. Tính toán ngày công thực và tổng giờ OT
+                for (const day in emp.att) {
+                    const att = emp.att[day];
+                    if (att.worked) {
+                        days_actual += 1;
+                    }
+                    total_ot_hours += parseFloat(att.ot) || 0;
+                }
+
+                // 2. Tính toán Ngày Công Quy Đổi từ OT
+                const ot_hours_converted = total_ot_hours * OT_MULTIPLIER; // Giờ OT quy đổi (1.5x)
+                const ot_days_converted = ot_hours_converted / HOURS_PER_DAY; // Ngày OT quy đổi (8h/ngày)
+                
+                // 3. Tổng Ngày Công Quy Đổi
+                const total_days_converted = days_actual + ot_days_converted;
+
+                // 4. Tính Lương
+                // Lương và phí admin được tính dựa trên giá trị không làm tròn (độ chính xác cao nhất)
+                const total_salary = total_days_converted * emp.rate;
+
+                // 5. Tính Phí Admin
+                let admin_fee = 0;
+                if (emp.role === 'tho') {
+                    // Thợ chính: 50,000 VNĐ / ngày công quy đổi
+                    admin_fee = total_days_converted * 50000;
+                } else {
+                    // Thợ phụ: 20,000 VNĐ / ngày công thực tế (không tính OT)
+                    admin_fee = days_actual * 20000;
+                }
+                
+                const net_salary = total_salary - admin_fee;
+
+                // GIỮ NGUYÊN SỐ THẬP PHÂN TRONG OBJECT ĐỂ ĐẢM BẢO TÍNH TOÁN CUỐI CÙNG LÀ CHÍNH XÁC
+                return {
+                    id: index + 1,
+                    name: emp.name,
+                    days_actual: days_actual,
+                    total_ot_hours: total_ot_hours,
+                    ot_days_converted: ot_days_converted, // Công quy đổi từ OT
+                    total_days_converted: total_days_converted, // Tổng công quy đổi
+                    total_salary: total_salary,
+                    admin_fee: admin_fee,
+                    net_salary: net_salary
+                };
+            });
+            return results;
+        }
+
+        /**
+         * Lưu cả dữ liệu chấm công và kết quả tính lương vào LocalStorage
+         */
+        async function saveData() {
+            const results = calculateResults(); // Tính kết quả trước khi lưu
+            renderResults(results); // Hiển thị kết quả sau khi tính
+
+            const key = getLocalStorageKey();
+            
+            // Hiển thị trạng thái đang lưu
+            const statusEl = document.getElementById('saveStatus');
+            statusEl.textContent = "Đang lưu...";
+            statusEl.style.color = '#fbbf24';
+            statusEl.style.display = 'block';
+
+            try {
+                const dataToSave = { 
+                    employees: employees,
+                    results: results // LƯU KẾT QUẢ
+                };
+                localStorage.setItem(key, JSON.stringify(dataToSave));
+
+                // Cập nhật trạng thái lưu thành công
+                statusEl.textContent = "Đã lưu thành công!";
+                statusEl.style.color = '#10b981';
+                // Ẩn sau 3 giây
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 3000);
+                console.log(`Employees and Results data saved successfully to localStorage key: ${key}`);
+
+            } catch(error) {
+                // Cập nhật trạng thái lỗi
+                statusEl.textContent = "Lỗi khi lưu vào LocalStorage!";
+                statusEl.style.color = '#dc2626';
+                console.error("Error saving document to localStorage: ", error);
+                
+                // Ẩn sau 5 giây
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        /**
+         * Hàm định dạng tiền tệ.
+         * Giữ nguyên giá trị thập phân (ví dụ: 12,345,678.90 VNĐ)
+         */
+        function formatCurrency(amount) {
+            const safeAmount = amount < 0 ? 0 : amount;
+            // Sử dụng toLocaleString với minimum/maximumFractionDigits để giữ số thập phân
+            return safeAmount.toLocaleString('vi-VN', { 
+                style: 'currency', 
+                currency: 'VND',
+                minimumFractionDigits: 0, 
+                maximumFractionDigits: 2  
+            }).replace('₫', ' VNĐ');
+        }
+
+        /**
+         * Hàm định dạng số ngày công và giờ OT theo yêu cầu:
+         * - Giữ tối đa 2 chữ số thập phân (không làm tròn giá trị gốc).
+         * - Bỏ số 0 ở cuối nếu là số nguyên (9.0 -> 9, 25.50 -> 25.5).
+         */
+        function formatDays(days) {
+            // Sử dụng logic: làm tròn đến 2 chữ số thập phân, sau đó dùng parseFloat để loại bỏ số 0 vô nghĩa ở cuối.
+            let formatted = parseFloat(days.toPrecision(10)).toFixed(2);
+            return parseFloat(formatted).toString(); 
+        }
+
+        function addEmployee(){
+            const name = document.getElementById('empName').value.trim() || `NV${employees.length + 1}`;
+            const role = document.getElementById('empRole').value;
+            const rateVal = parseFloat(document.getElementById('empRate').value) || 0;
+            
+            employees.push({ name: name, role: role, rate: rateVal, att: {} });
+            
+            document.getElementById('empName').value = '';
+            document.getElementById('empRate').value = '';
+            renderAttendanceTable();
+            saveData(); // Lưu ngay sau khi thêm nhân viên
+        }
+
+        function removeEmployee(i) {
+            employees.splice(i, 1);
+            renderAttendanceTable();
+            saveData(); // Lưu ngay sau khi xóa nhân viên
+        }
+
+        function updateAtt(empIdx, day, type, value) {
+            if (!employees[empIdx].att) employees[empIdx].att = {};
+            const dayStr = String(day); // Đảm bảo key ngày là string
+            if (!employees[empIdx].att[dayStr]) employees[empIdx].att[dayStr] = { worked: false, ot: 0 };
+            
+            if (type === 'worked') {
+                employees[empIdx].att[dayStr].worked = value;
+            } else if (type === 'ot') {
+                employees[empIdx].att[dayStr].ot = parseFloat(value) || 0;
+            }
+            
+            // Debounce save (đợi 500ms trước khi lưu để tránh quá nhiều lần ghi khi người dùng click liên tục)
+            clearTimeout(window.saveTimer);
+            window.saveTimer = setTimeout(saveData, 500); 
+        }
+
+        function renderAttendanceTable() {
+            const tbody = document.getElementById('attendanceBody');
+            tbody.innerHTML = '';
+
+            employees.forEach((emp, idx) => {
+                const tr = document.createElement('tr');
+                tr.style.transition = 'background-color 100ms ease-in-out';
+                tr.onmouseover = () => tr.style.backgroundColor = '#f9fafb';
+                tr.onmouseout = () => tr.style.backgroundColor = 'white';
+
+                let cells = `
+                    <td style="padding: 0.75rem 0.5rem; white-space: nowrap; font-size: 0.875rem; font-weight: 500; color: #111827; border-right: 1px solid #e5e7eb; text-align: center;">${idx + 1}</td>
+                    <td style="padding: 0.75rem 1rem; white-space: nowrap; font-size: 0.875rem; font-weight: 500; color: #111827; border-right: 1px solid #e5e7eb; text-align: left;">${emp.name}</td>
+                    <td style="padding: 0.75rem 0.5rem; white-space: nowrap; font-size: 0.75rem; text-align: center; color: #4f46e5; font-weight: 600; border-right: 1px solid #e5e7eb;">${emp.role === 'tho' ? 'Thợ chính' : 'Thợ phụ'}</td>
+                    <td style="padding: 0.75rem 0.5rem; white-space: nowrap; font-size: 0.875rem; text-align: right; color: #374151; border-right: 1px solid #e5e7eb;">${formatCurrency(emp.rate)}</td>
+                `;
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dayStr = String(d);
+                    const att = emp.att[dayStr] || { worked: false, ot: 0 };
+                    const worked = att.worked ? 'checked' : '';
+                    const ot = att.ot || '';
+                    
+                    // Custom Toggle Switch CSS (Minimal)
+                    const toggleStyle = `
+                        .toggle-switch { position: relative; display: inline-block; width: 36px; height: 20px; }
+                        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+                        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
+                        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
+                        input:checked + .slider { background-color: #10b981; }
+                        input:checked + .slider:before { transform: translateX(16px); }
+                    `;
+
+                    cells += `
+                        <td style="padding: 0.25rem; text-align: center; border-left: 1px solid #f3f4f6; border-right: 1px solid #f3f4f6;">
+                            <style>${toggleStyle}</style>
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                                <!-- Checkbox cho Ngày làm -->
+                                <label class="toggle-switch">
+                                    <input type="checkbox" onchange="updateAtt(${idx},${d},'worked',this.checked)" ${worked}>
+                                    <span class="slider"></span>
+                                </label>
+                                <!-- Input cho OT -->
+                                <input style="width: 64px; height: 28px; text-align: center; font-size: 0.75rem; border-radius: 0.375rem; border: 1px solid #d1d5db; padding: 0.125rem;" 
+                                       type="number" step="0.25" min="0" placeholder="OT" value="${ot}" oninput="updateAtt(${idx},${d},'ot',this.value)">
+                            </div>
+                        </td>
+                    `;
+                }
+                
+                cells += `
+                    <td style="padding: 0.75rem 0.5rem; white-space: nowrap; text-align: center;">
+                        <button type="button" style="color: #dc2626; transition: color 150ms;" onmouseover="this.style.color='#991b1b'" onmouseout="this.style.color='#dc2626'" onclick="removeEmployee(${idx})">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                        </button>
+                    </td>
+                `;
+                tr.innerHTML = cells;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        /**
+         * Hàm Tính Lương và Lưu Dữ liệu (chạy khi click nút "Tính Lương Ngay")
+         */
+        function calculateAndSave() {
+            if (employees.length === 0) {
+                 // Không làm gì nếu không có nhân viên
+                 document.getElementById('resultsArea').classList.add('hidden');
+                 return;
+            }
+            saveData(); // Tính toán, render và lưu cả employees + results
+            document.getElementById('resultsArea').scrollIntoView({ behavior: 'smooth' });
+        }
+
+
+        /**
+         * Hàm chỉ render kết quả ra màn hình
+         */
+        function renderResults(results) {
+            const resultsBody = document.getElementById('resultsBody');
+            const resultsArea = document.getElementById('resultsArea');
+            resultsBody.innerHTML = '';
+            
+            if (results.length === 0) {
+                resultsArea.classList.add('hidden');
+                return;
+            }
+
+            // Hiển thị kết quả
+            results.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid #e5e7eb';
+                tr.onmouseover = () => tr.style.backgroundColor = '#f0fdfa';
+                tr.onmouseout = () => tr.style.backgroundColor = 'white';
+                tr.style.transition = 'background-color 150ms ease-in-out';
+                tr.innerHTML = `
+                    <!-- Cột # (Số thứ tự) - Căn giữa -->
+                    <td style="padding: 0.75rem 0.75rem; white-space: nowrap; font-size: 0.875rem; color: #6b7280; text-align: center;">${r.id}</td>
+                    <!-- Cột Tên - Căn trái -->
+                    <td style="padding: 0.75rem 0.75rem; white-space: nowrap; font-size: 0.875rem; font-weight: 500; color: #111827; text-align: left;">${r.name}</td>
+                    <!-- Các cột số ngày công/giờ OT Căn giữa (thay đổi mới) -->
+                    <td style="padding: 0.75rem 0.75rem; white-space: nowrap; font-size: 0.875rem; color: #4f46e5; text-align: center;">${formatDays(r.days_actual)}</td>
+                    <td style="padding: 0.75rem 0.75rem; white-space: nowrap; font-size: 0.875rem; color: #6b7280; text-align: center;">${formatDays(r.total_ot_hours)}</td>
+                    <td style="padding: 0.75rem 0.75rem; white-space: nowrap; font-size: 0.875rem; font-weight: 600; color: #059669; text-align: center;">${formatDays(r.ot_days_converted)}</td>
+                    <td style="padding: 0.75rem 0.75rem; white-space: nowrap; font-size: 0.875rem; font-weight: 800; color: #4338ca; text-align: center;">${formatDays(r.total_days_converted)}</td>
+                    <!-- Các cột tiền tệ Căn phải -->
+                    <td style="padding: 0.75rem 0.75rem; white-space: nowrap; font-size: 0.875rem; color: #374151; text-align: right;">${formatCurrency(r.total_salary)}</td>
+                    <td style="padding: 0.75rem 0.75rem; white-space: nowrap; font-size: 0.875rem; color: #dc2626; text-align: right;">(${formatCurrency(r.admin_fee)})</td>
+                    <td style="padding: 0.75rem 0.75rem; white-space: nowrap; font-size: 1.125rem; font-weight: 800; color: #0d9488; text-align: right;">${formatCurrency(r.net_salary)}</td>
+                `;
+                resultsBody.appendChild(tr);
+            });
+
+            resultsArea.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
